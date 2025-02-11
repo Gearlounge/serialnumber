@@ -72,14 +72,13 @@
   <script>
     document.getElementById('serial-form').addEventListener('submit', async function(e) {
       e.preventDefault();
-
+      
       const name = document.getElementById('name').value;
       const contact = document.getElementById('contact').value;
       const email = document.getElementById('email').value || "없음";
       const product = document.getElementById('product').value;
       const serial = document.getElementById('serial').value;
       const unit = document.getElementById('unit').value;
-      const date = new Date().toLocaleString();
 
       const newData = {
         name,
@@ -88,24 +87,60 @@
         product,
         serial,
         unit,
-        date
+        date: new Date().toLocaleString()
       };
 
       try {
-        const response = await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json');
-        const data = await response.json();
-        let currentData = atob(data.content);  // base64 디코딩
-        currentData = JSON.parse(currentData || '[]');
+        // 현재 data.json 파일 가져오기
+        const response = await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
+          method: 'GET',
+          headers: {
+            'Authorization': 'token ' + atob('dG9rZW4='),
+            'Accept': 'application/vnd.github.v3.raw'
+          }
+        });
+
+        let currentData = await response.json();
+        currentData = Array.isArray(currentData) ? currentData : [];
 
         currentData.push(newData);
 
-        alert('시리얼 넘버가 성공적으로 등록되었습니다!');
-        document.getElementById('serial-form').reset();
+        // data.json 파일 업데이트
+        const updateResponse = await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
+          method: 'PUT',
+          headers: {
+            'Authorization': 'token ' + atob('dG9rZW4='),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: 'Add new serial number',
+            content: btoa(JSON.stringify(currentData, null, 2)),  // base64로 변환
+            sha: await getSha()
+          })
+        });
+
+        if (updateResponse.ok) {
+          alert('시리얼 넘버가 성공적으로 등록되었습니다!');
+          document.getElementById('serial-form').reset();
+        } else {
+          throw new Error('등록에 실패했습니다.');
+        }
       } catch (error) {
         console.error('Error:', error);
         alert('오류가 발생했습니다. 다시 시도해주세요.');
       }
     });
+
+    async function getSha() {
+      const response = await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'token ' + atob('dG9rZW4=')
+        }
+      });
+      const data = await response.json();
+      return data.sha;
+    }
   </script>
 </body>
 </html>
