@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head> 
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>시리얼 넘버 확인</title>
@@ -15,9 +15,10 @@
     .container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 20px;
       border: 1px solid #444;
+      padding: 20px;
       border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
     }
     table {
       width: 100%;
@@ -25,26 +26,20 @@
       margin-top: 20px;
     }
     th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
+      border: 1px solid #ddd;
+      padding: 8px;
       text-align: center;
     }
     th {
-      background-color: #444;
-    }
-    input, button {
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
+      background-color: #f4f1de;
+      color: black;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>시리얼 넘버 확인 및 관리</h2>
-    <input type="date" id="date-filter" />
-    <button onclick="filterByDate()">날짜로 필터링</button>
-    <table>
+    <h2>등록된 시리얼 넘버 확인</h2>
+    <table id="data-table">
       <thead>
         <tr>
           <th>성함</th>
@@ -54,11 +49,12 @@
           <th>시리얼 넘버</th>
           <th>유닛 넘버</th>
           <th>등록 날짜</th>
-          <th>삭제</th>
         </tr>
       </thead>
-      <tbody id="data-table">
-        <!-- 데이터가 여기에 표시됩니다 -->
+      <tbody>
+        <tr>
+          <td colspan="7">데이터를 불러오는 중...</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -66,90 +62,43 @@
   <script>
     async function fetchData() {
       try {
-        const response = await fetch('https://raw.githubusercontent.com/porory06/serial-number-page/main/data.json');
-        const data = await response.json();
-        displayData(data);
-      } catch (error) {
-        console.error('데이터를 불러오는 중 오류 발생:', error);
-      }
-    }
-
-    function displayData(data) {
-      const table = document.getElementById('data-table');
-      table.innerHTML = ''; // 기존 내용을 비움
-
-      data.forEach((item, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${item.name}</td>
-          <td>${item.contact}</td>
-          <td>${item.email}</td>
-          <td>${item.product}</td>
-          <td>${item.serial}</td>
-          <td>${item.unit}</td>
-          <td>${item.date}</td>
-          <td><button onclick="deleteEntry(${index})">삭제</button></td>
-        `;
-        table.appendChild(row);
-      });
-    }
-
-    function filterByDate() {
-      const selectedDate = document.getElementById('date-filter').value;
-      if (!selectedDate) {
-        alert('날짜를 선택해주세요.');
-        return;
-      }
-
-      fetch('https://raw.githubusercontent.com/porory06/serial-number-page/main/data.json')
-        .then(response => response.json())
-        .then(data => {
-          const filteredData = data.filter(item => item.date.startsWith(selectedDate));
-          displayData(filteredData);
-        })
-        .catch(error => console.error('날짜 필터링 중 오류 발생:', error));
-    }
-
-    async function deleteEntry(index) {
-      try {
-        const response = await fetch('https://raw.githubusercontent.com/porory06/serial-number-page/main/data.json');
-        let data = await response.json();
-
-        data.splice(index, 1); // 선택한 항목 삭제
-
-        // 업데이트된 data.json 파일 다시 업로드
-        await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
-          method: 'PUT',
+        const response = await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
+          method: 'GET',
           headers: {
-            'Authorization': 'token ' + atob('dG9rZW4='),  // Secrets 사용
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            message: 'Delete entry',
-            content: btoa(JSON.stringify(data, null, 2)),  // base64 변환
-            sha: await getSha()
-          })
+            'Authorization': 'token {{YOUR_GITHUB_TOKEN}}',
+            'Accept': 'application/vnd.github.v3.raw'
+          }
         });
 
-        alert('삭제되었습니다.');
-        fetchData(); // 새로고침
+        const data = await response.json();
+        const tableBody = document.querySelector('#data-table tbody');
+        tableBody.innerHTML = '';
+
+        if (data.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="7">등록된 데이터가 없습니다.</td></tr>';
+          return;
+        }
+
+        data.forEach(item => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.contact}</td>
+            <td>${item.email}</td>
+            <td>${item.product}</td>
+            <td>${item.serial}</td>
+            <td>${item.unit}</td>
+            <td>${item.date}</td>
+          `;
+          tableBody.appendChild(row);
+        });
       } catch (error) {
-        console.error('삭제 중 오류 발생:', error);
+        console.error('Error:', error);
+        const tableBody = document.querySelector('#data-table tbody');
+        tableBody.innerHTML = '<tr><td colspan="7">데이터를 불러오는 중 오류가 발생했습니다.</td></tr>';
       }
     }
 
-    async function getSha() {
-      const response = await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
-        method: 'GET',
-        headers: {
-          'Authorization': 'token ' + atob('dG9rZW4=')
-        }
-      });
-      const data = await response.json();
-      return data.sha;
-    }
-
-    // 페이지 로드 시 데이터 가져오기
     fetchData();
   </script>
 </body>
