@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>제품 시리얼 등록</title>
+  <title>시리얼 넘버 확인</title>
   <style>
     body {
       background-color: black;
@@ -13,142 +13,144 @@
       padding: 20px;
     }
     .container {
-      max-width: 400px;
+      max-width: 800px;
       margin: 0 auto;
-      border: 1px solid #444;
       padding: 20px;
+      border: 1px solid #444;
       border-radius: 10px;
-      box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
     }
-    input, select, button {
-      width: 90%;
-      padding: 10px;
-      margin-top: 5px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
       border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #444;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 0;
       border-radius: 5px;
-    }
-    button {
-      background-color: #f4f1de;
-      color: black;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #e6e1d5;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    .note {
-      font-size: 12px;
-      color: #ff4d4d;
-      text-align: left;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>제품 시리얼 등록</h2>
-    <form id="serial-form">
-      <label for="name">성함 *</label>
-      <input type="text" id="name" name="name" required placeholder="성함을 입력하세요">
-      
-      <label for="contact">연락처 *</label>
-      <input type="text" id="contact" name="contact" required placeholder="연락처를 입력하세요">
-      
-      <label for="email">이메일</label>
-      <input type="email" id="email" name="email" placeholder="이메일을 입력하세요">
-      
-      <label for="product">제품 선택 *</label>
-      <select id="product" name="product" required>
-        <option value="" disabled selected>제품을 선택하세요</option>
-        <option value="iloud">iloud</option>
-        <option value="iloud mtm">iloud mtm</option>
-        <option value="iloud precision">iloud precision</option>
-      </select>
-      
-      <label for="serial">시리얼 넘버 *</label>
-      <input type="text" id="serial" name="serial" required placeholder="시리얼 넘버를 입력하세요">
-      
-      <label for="unit">유닛 넘버 *</label>
-      <input type="text" id="unit" name="unit" required placeholder="유닛 넘버를 입력하세요">
-      
-      <button type="submit">등록</button>
-    </form>
+    <h2>시리얼 넘버 확인 및 관리</h2>
+    <input type="date" id="date-filter" />
+    <button onclick="filterByDate()">날짜로 필터링</button>
+    <table>
+      <thead>
+        <tr>
+          <th>성함</th>
+          <th>연락처</th>
+          <th>이메일</th>
+          <th>제품명</th>
+          <th>시리얼 넘버</th>
+          <th>유닛 넘버</th>
+          <th>등록 날짜</th>
+          <th>삭제</th>
+        </tr>
+      </thead>
+      <tbody id="data-table">
+        <!-- 데이터가 여기에 표시됩니다 -->
+      </tbody>
+    </table>
   </div>
 
   <script>
-    document.getElementById('serial-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      const name = document.getElementById('name').value;
-      const contact = document.getElementById('contact').value;
-      const email = document.getElementById('email').value || "없음";
-      const product = document.getElementById('product').value;
-      const serial = document.getElementById('serial').value;
-      const unit = document.getElementById('unit').value;
-
-      const newData = {
-        name,
-        contact,
-        email,
-        product,
-        serial,
-        unit,
-        date: new Date().toLocaleString()
-      };
-
+    async function fetchData() {
       try {
-        const response = await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
-          method: 'GET',
-          headers: {
-            'Authorization': 'token {{YOUR_GITHUB_TOKEN}}',
-            'Accept': 'application/vnd.github.v3.raw'
-          }
-        });
+        const response = await fetch('https://raw.githubusercontent.com/porory06/serial-number-page/main/data.json');
+        const data = await response.json();
+        displayData(data);
+      } catch (error) {
+        console.error('데이터를 불러오는 중 오류 발생:', error);
+      }
+    }
 
-        let currentData = await response.json();
-        currentData = Array.isArray(currentData) ? currentData : [];
+    function displayData(data) {
+      const table = document.getElementById('data-table');
+      table.innerHTML = ''; // 기존 내용을 비움
 
-        currentData.push(newData);
+      data.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.name}</td>
+          <td>${item.contact}</td>
+          <td>${item.email}</td>
+          <td>${item.product}</td>
+          <td>${item.serial}</td>
+          <td>${item.unit}</td>
+          <td>${item.date}</td>
+          <td><button onclick="deleteEntry(${index})">삭제</button></td>
+        `;
+        table.appendChild(row);
+      });
+    }
 
-        const sha = await getSha();
-        const updateResponse = await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
+    function filterByDate() {
+      const selectedDate = document.getElementById('date-filter').value;
+      if (!selectedDate) {
+        alert('날짜를 선택해주세요.');
+        return;
+      }
+
+      fetch('https://raw.githubusercontent.com/porory06/serial-number-page/main/data.json')
+        .then(response => response.json())
+        .then(data => {
+          const filteredData = data.filter(item => item.date.startsWith(selectedDate));
+          displayData(filteredData);
+        })
+        .catch(error => console.error('날짜 필터링 중 오류 발생:', error));
+    }
+
+    async function deleteEntry(index) {
+      try {
+        const response = await fetch('https://raw.githubusercontent.com/porory06/serial-number-page/main/data.json');
+        let data = await response.json();
+
+        data.splice(index, 1); // 선택한 항목 삭제
+
+        // 업데이트된 data.json 파일 다시 업로드
+        await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
           method: 'PUT',
           headers: {
-            'Authorization': 'token {{YOUR_GITHUB_TOKEN}}',
+            'Authorization': 'token ' + atob('dG9rZW4='),  // Secrets 사용
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            message: 'Add new serial number',
-            content: btoa(JSON.stringify(currentData, null, 2)),
-            sha: sha
+            message: 'Delete entry',
+            content: btoa(JSON.stringify(data, null, 2)),  // base64 변환
+            sha: await getSha()
           })
         });
 
-        if (updateResponse.ok) {
-          alert('시리얼 넘버가 성공적으로 등록되었습니다!');
-          document.getElementById('serial-form').reset();
-        } else {
-          throw new Error('등록에 실패했습니다.');
-        }
+        alert('삭제되었습니다.');
+        fetchData(); // 새로고침
       } catch (error) {
-        console.error('Error:', error);
-        alert('오류가 발생했습니다. 다시 시도해주세요.');
+        console.error('삭제 중 오류 발생:', error);
       }
-    });
+    }
 
     async function getSha() {
       const response = await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
         method: 'GET',
         headers: {
-          'Authorization': 'token {{YOUR_GITHUB_TOKEN}}'
+          'Authorization': 'token ' + atob('dG9rZW4=')
         }
       });
       const data = await response.json();
       return data.sha;
     }
+
+    // 페이지 로드 시 데이터 가져오기
+    fetchData();
   </script>
 </body>
 </html>
