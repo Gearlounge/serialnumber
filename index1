@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gearlounge 시리얼 넘버 등록</title>
+  <style>
+    body {
+      background-color: #111;
+      color: white;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 400px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #222;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #e8e3d3;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #d6cfc0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>시리얼 넘버 등록</h2>
+    <form id="serial-form">
+      <label for="name">성함 *</label>
+      <input type="text" id="name" placeholder="성함을 입력해주세요" required>
+      <label for="phone">연락처 *</label>
+      <input type="text" id="phone" placeholder="연락처를 입력해주세요" required>
+      <label for="email">이메일</label>
+      <input type="email" id="email" placeholder="이메일을 입력해주세요">
+      <label for="product">제품 선택 *</label>
+      <select id="product" required>
+        <option value="" disabled selected>제품을 선택하세요</option>
+        <option value="speaker1">iloud</option>
+        <option value="speaker2">iloud mtm</option>
+        <option value="speaker3">iloud precision</option>
+      </select>
+      <label for="serial">시리얼 넘버 *</label>
+      <input type="text" id="serial" placeholder="시리얼 넘버를 입력해주세요" required>
+      <label for="unit">유닛 넘버 *</label>
+      <input type="text" id="unit" placeholder="유닛 넘버를 입력해주세요" required>
+      <button type="submit">등록</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('serial-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('등록이 완료되었습니다!');
+    });
+  </script>
+</body>
+</html>
