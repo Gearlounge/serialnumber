@@ -100,24 +100,22 @@
       };
 
       try {
-        const response = await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
-          method: 'GET',
-          headers: {
-            'Authorization': 'token {{YOUR_GITHUB_TOKEN}}',
-            'Accept': 'application/vnd.github.v3.raw'
-          }
-        });
-
+        // Fetch the current data from the raw GitHub URL for data.json
+        const response = await fetch('https://raw.githubusercontent.com/Gearlounge/serialnumber/main/data.json');
         let currentData = await response.json();
         currentData = Array.isArray(currentData) ? currentData : [];
 
+        // Append the new data to the current data array
         currentData.push(newData);
 
+        // Get the SHA of the file for update
         const sha = await getSha();
-        const updateResponse = await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
+
+        // Update the data.json file with the new data
+        const updateResponse = await fetch('https://api.github.com/repos/Gearlounge/serialnumber/contents/data.json', {
           method: 'PUT',
           headers: {
-            'Authorization': 'token {{YOUR_GITHUB_TOKEN}}',
+            'Authorization': 'token {{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}}',
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -140,10 +138,10 @@
     });
 
     async function getSha() {
-      const response = await fetch('https://api.github.com/repos/porory06/serial-number-page/contents/data.json', {
+      const response = await fetch('https://api.github.com/repos/Gearlounge/serialnumber/contents/data.json', {
         method: 'GET',
         headers: {
-          'Authorization': 'token {{YOUR_GITHUB_TOKEN}}'
+          'Authorization': 'token {{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}}'
         }
       });
       const data = await response.json();
